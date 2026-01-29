@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Vector Notes</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; }
+    h1 { margin-bottom: 0.5rem; }
+    form { margin-bottom: 1.5rem; }
+    textarea { width: 100%; height: 80px; }
+    input[type="text"] { width: 100%; padding: 0.25rem; }
+    button { margin-top: 0.5rem; padding: 0.4rem 0.8rem; }
+    .note { padding: 0.5rem; border-bottom: 1px solid #ddd; }
+    .score { font-size: 0.85rem; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>Vector Notes</h1>
+
+  <h2>Add Note</h2>
+  <form id="add-note-form">
+    <textarea name="content" id="note-content" placeholder="Write a note..."></textarea>
+    <br />
+    <button type="submit">Save Note</button>
+  </form>
+
+  <h2>Search</h2>
+  <form id="search-form">
+    <input type="text" id="search-query" placeholder="Search by meaning..." />
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="results"></div>
+
+  <script>
+    const addForm = document.getElementById('add-note-form');
+    const searchForm = document.getElementById('search-form');
+    const resultsDiv = document.getElementById('results');
+
+    addForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const content = document.getElementById('note-content').value;
+      if (!content.trim()) return;
+
+      const res = await fetch('/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      const data = await res.json();
+      alert('Saved note with id ' + data.id);
+      document.getElementById('note-content').value = '';
+    });
+
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = document.getElementById('search-query').value;
+      if (!q.trim()) return;
+
+      const res = await fetch('/search?q=' + encodeURIComponent(q));
+      const data = await res.json();
+
+      resultsDiv.innerHTML = '<h3>Results</h3>';
+      if (data.length === 0) {
+        resultsDiv.innerHTML += '<p>No results.</p>';
+        return;
+      }
+
+      data.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'note';
+        div.innerHTML = `
+          <div><strong>#${item.id}</strong></div>
+          <div>${item.content}</div>
+          <div class="score">score: ${item.score.toFixed(3)}</div>
+        `;
+        resultsDiv.appendChild(div);
+      });
+    });
+  </script>
+</body>
+</html>
